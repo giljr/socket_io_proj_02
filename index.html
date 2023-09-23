@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello Socket.io!</title>
+</head>
+<body>
+    <h1>Provider Page</h1>
+    <h2>Instructions:</h2>
+    <ol>
+        <li>Please specify the room you wish to enter;</li>
+        <li>Enter your token;</li>
+        <li>Then tell us your offer.</li>
+    </ol>
+    <form id="form" action="">
+        <div>
+            <label for="room">Room #</label>
+            <input id="room" type="text" autocomplete="off" />
+        </div>
+        <div>
+            <label for="token">Token #</label>
+            <input id="token" type="text" autocomplete="off" />
+        </div>
+        <div>
+            <label for="offer">Offer #</label>
+            <input id="offer" type="text" autocomplete="off" />
+        </div>
+        <button type="submit">Send</button>
+    </form>
+    <ul id="offerList" style="color: green;"></ul> <!-- Add an empty <ul> element to display offers -->
+    <ul id="errorList" style="color: red;"></ul> <!-- Set the initial style to red -->
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+        const socket = io();
+
+        const form = document.getElementById('form');
+        const roomInput = document.getElementById('room');
+        const tokenInput = document.getElementById('token');
+        const offerInput = document.getElementById('offer');
+        const offerList = document.getElementById('offerList');
+        const errorList = document.getElementById('errorList');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (roomInput.value && tokenInput.value && offerInput.value) {
+                socket.emit('joinRoom', {
+                    room: roomInput.value,
+                    token: tokenInput.value,
+                    offer: offerInput.value
+                });
+                socket.emit('createOffer', { // Pass the data as an object
+                    offer: offerInput.value,
+                    token: tokenInput.value, // Pass the token here
+                });
+                roomInput.value = '';
+                offerInput.value = ''; // Clear offer input
+                tokenInput.value = '';
+                errorList.textContent = ''; // Clear any previous error message
+            } else {
+                // Display an error message if any input is missing
+                errorList.textContent = 
+"Please ensure that all fields are filled out and verify that you have provided the necessary credentials.";
+            }
+        });
+
+        // Handle server events
+        socket.on('offerCreated', (data) => {
+            // Display a success message with the username and offer
+            if (data && data.username && data.offer) {
+                const successMessage = document.createElement('li');
+                successMessage.textContent = `${data.username}# Offer created successfully: ${data.offer}`;
+                offerList.appendChild(successMessage);
+            }
+        });
+        
+        socket.on('invalidToken', (data) => {
+            // Display the "Invalid Token" error message
+            if (data && data.username && data.err) {
+                const errorMessage = document.createElement('li');
+                errorMessage.textContent = `${data.username}# ERROR: ${data.err}`;
+                errorList.appendChild(errorMessage);
+            }
+        });
+
+    </script>
+</body>
+</html>
