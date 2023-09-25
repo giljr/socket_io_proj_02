@@ -1,13 +1,20 @@
 import express from 'express';
 import { createServer, validateHeaderName } from 'http';
 import { Server } from 'socket.io';
+import { fileURLToPath } from 'url'; // Importe fileURLToPath a partir do módulo url
+import * as path from 'path'; // Importe o módulo path usando 'import * as'
+
+// Obtenha o caminho do diretório atual do arquivo
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
 app.get('/', (req, res) => {
-    res.sendFile(new URL('./index.html', import.meta.url).pathname);
+    const indexPath = path.join(__dirname, 'index.html');
+    res.sendFile(indexPath);
 });
 
 io.on('connection', (socket) => {
